@@ -2,6 +2,8 @@
 
 A lightweight sentiment analysis application built with **Java backend** and a modern **HTML/CSS/JavaScript** frontend. Analyze the emotional tone of your text instantly with a clean, responsive interface.
 
+## 🌐 [Live Demo](https://prabanshan.github.io/sentiment-analysis/)
+
 ## ✨ Features
 
 - 🚀 **Real-Time Analysis** - Get instant sentiment classification
