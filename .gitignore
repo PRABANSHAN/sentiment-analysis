@@ -1,0 +1,19 @@
+# Compiled Java bytecode
+*.class
+*.jar
+*.war
+
+# Package Files
+*.zip
+*.tar.gz
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
