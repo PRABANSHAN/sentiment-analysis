@@ -1,6 +1,6 @@
 # 💭 Sentiment Analysis Application
 
-A powerful web application that analyzes the emotional tone and sentiment of any given text using advanced Natural Language Processing (NLP) and the VADER sentiment analyzer.
+A powerful web application that analyzes the emotional tone and sentiment of any given text using a native Java HTTP server and a custom rule-based sentiment analyzer.
 
 ## ✨ Features
 
@@ -16,11 +16,7 @@ A powerful web application that analyzes the emotional tone and sentiment of any
 - **Loading States**: User-friendly loading animations during analysis
 - **Error Handling**: Robust error messages and validation
 
-## 🚀 Live Demo
-
-🔗 **[Launch Live Application](https://sentiment-analysis-heroku.herokuapp.com)**
-
-## 🛠️ Tech Stack
+## ️ Tech Stack
 
 ### Frontend
 - **HTML5**: Semantic markup and structure
@@ -30,25 +26,19 @@ A powerful web application that analyzes the emotional tone and sentiment of any
 - **Google Fonts (Poppins)**: Professional typography
 
 ### Backend
-- **Flask**: Lightweight Python web framework
-- **VADER Sentiment**: Advanced sentiment analysis library
-- **Gunicorn**: Production WSGI HTTP server
-- **Python 3.x**: Core programming language
+- **Java**: Native backend implementation using the JDK HTTP server
+- **Custom sentiment analyzer**: Rule-based sentiment scoring in Java
+- **No external backend dependencies**: Uses only standard Java libraries
 
 ### Deployment
-- **Heroku**: Cloud platform for hosting
-- **Procfile**: Application server configuration
-- **requirements.txt**: Python dependencies management
+- **Platform support**: Java applications can run on any compatible server or hosting platform
+- **Procfile**: Application server configuration for Java
 
 ## 📋 Requirements
 
 ### Local Development
-```
-Flask==2.3.3
-Flask-Cors==3.0.10
-vaderSentiment==3.3.2
-gunicorn==23.0.0
-```
+- **Java 17+** installed
+- **No additional backend dependencies required**
 
 ### Browser Requirements
 - Modern web browser (Chrome, Firefox, Safari, Edge)
@@ -63,31 +53,18 @@ git clone https://github.com/PRABANSHAN/sentiment-heroku.git
 cd sentiment-heroku
 ```
 
-### 2. Create Virtual Environment
-```bash
-python -m venv venv
-```
-
-### 3. Activate Virtual Environment
+### 2. Run Locally
 
 **On Windows:**
 ```bash
-venv\Scripts\activate
+javac SentimentServer.java
+java SentimentServer
 ```
 
 **On macOS/Linux:**
 ```bash
-source venv/bin/activate
-```
-
-### 4. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 5. Run Locally
-```bash
-python app.py
+javac SentimentServer.java
+java SentimentServer
 ```
 
 The application will be available at `http://localhost:5000`
@@ -161,13 +138,13 @@ heroku open
 
 ```
 sentiment-heroku/
-├── app.py                 # Flask application & API routes
+├── SentimentServer.java  # Java HTTP server and sentiment API
 ├── index.html            # Frontend UI
-├── requirements.txt      # Python dependencies
-├── Procfile             # Heroku configuration
-├── runtime.txt          # Python version specification
-├── README.md            # This file
-└── .gitignore          # Git ignore rules
+├── Procfile             # Application server configuration
+├── README.md             # This file
+├── run-java.bat          # Windows launch helper for Java
+├── start.sh              # Unix shell startup script for Java
+└── .gitignore            # Git ignore rules
 ```
 
 ## 🔧 API Endpoints
@@ -261,9 +238,7 @@ This project is open source and available under the MIT License. See the LICENSE
 
 ## 🙏 Acknowledgments
 
-- **VADER (Valence Aware Dictionary and sEntiment Reasoner)**: For sentiment analysis
-- **Flask Team**: For the lightweight web framework
-- **Heroku**: For free hosting and deployment
+- **Java HTTP Server**: For the native backend implementation
 - **Font Awesome**: For beautiful icons
 - **Community Contributors**: For feedback and improvements
 
