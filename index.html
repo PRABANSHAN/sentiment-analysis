@@ -1,11 +1,14 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sentiment Analysis</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         * {
             margin: 0;
@@ -75,6 +78,11 @@
             border-color: #1a2980;
         }
 
+        textarea:disabled {
+            background: #f1f5f9;
+            cursor: not-allowed;
+        }
+
         button {
             background: linear-gradient(135deg, #1a2980, #26d0ce);
             color: white;
@@ -88,9 +96,14 @@
             width: 100%;
         }
 
-        button:hover {
+        button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(26, 41, 128, 0.3);
+        }
+
+        button:disabled {
+            cursor: wait;
+            opacity: 0.7;
         }
 
         #result {
@@ -129,69 +142,247 @@
             margin: 0.5rem 0;
             display: flex;
             justify-content: space-between;
+            gap: 1rem;
         }
 
         .score-label {
             font-weight: 500;
         }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.7rem;
+            }
+
+            #result {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <div class="container">
+    <main class="container">
         <div class="logo-container">
-            <i class="fas fa-brain logo"></i>
+            <i class="fas fa-brain logo" aria-hidden="true"></i>
             <h1>Sentiment Analysis</h1>
-            <p class="subtitle">Analyze the emotional tone of your text using advanced AI</p>
+            <p class="subtitle">
+                Analyze the emotional tone of your text using advanced AI
+            </p>
         </div>
-        <textarea id="text" placeholder="Enter your text here to analyze its sentiment..."></textarea>
-        <button onclick="analyzeSentiment()">
-            <i class="fas fa-search"></i> Analyze Sentiment
+
+        <label for="text" class="visually-hidden">Text to analyze</label>
+
+        <textarea
+            id="text"
+            placeholder="Enter your text here to analyze its sentiment..."
+            aria-describedby="input-help"
+        ></textarea>
+
+        <p id="input-help" class="visually-hidden">
+            Enter text and select Analyze Sentiment to see the result.
+        </p>
+
+        <button id="analyze-button" type="button" onclick="analyzeSentiment()">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            Analyze Sentiment
         </button>
-        <div id="result"></div>
-    </div>
+
+        <div id="result" role="status" aria-live="polite"></div>
+    </main>
 
     <script>
-        async function analyzeSentiment() {
-            const text = document.getElementById('text').value;
-            const result = document.getElementById('result');
+        const REQUEST_TIMEOUT = 15000;
 
-            if (!text) {
-                alert('Please enter some text to analyze');
+        async function analyzeSentiment() {
+            const textInput = document.getElementById('text');
+            const result = document.getElementById('result');
+            const button = document.getElementById('analyze-button');
+            const text = textInput.value.trim();
+
+            if (button.disabled) {
                 return;
             }
 
-            try {
-                result.innerHTML = '<div style="text-align: center; padding: 1rem;"><i class="fas fa-spinner fa-spin"></i> Analyzing...</div>';
-                result.style.display = 'block';
+            if (!text) {
                 result.className = 'neutral';
+                result.style.display = 'block';
+                result.textContent = 'Please enter some text to analyze.';
+                textInput.focus();
+                return;
+            }
 
+            const controller = new AbortController();
+            let timedOut = false;
+
+            const timeoutId = setTimeout(() => {
+                timedOut = true;
+                controller.abort();
+            }, REQUEST_TIMEOUT);
+
+            button.disabled = true;
+            textInput.disabled = true;
+
+            result.style.display = 'block';
+            result.className = 'neutral';
+            result.replaceChildren();
+
+            const loading = document.createElement('div');
+            loading.style.textAlign = 'center';
+            loading.style.padding = '1rem';
+
+            const spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin';
+            spinner.setAttribute('aria-hidden', 'true');
+
+            loading.append(
+                spinner,
+                document.createTextNode(' Analyzing...')
+            );
+
+            result.appendChild(loading);
+
+            try {
                 const response = await fetch('/api/sentiment', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ text })
+                    body: JSON.stringify({ text }),
+                    signal: controller.signal
                 });
 
+                if (!response.ok) {
+                    throw new Error(`Request failed: ${response.status}`);
+                }
+
                 const data = await response.json();
-                result.className = data.label.toLowerCase();
-                result.innerHTML = `
-                    <h3 style="margin-bottom: 1rem; color: #2d3748;">
-                        <i class="fas fa-${data.label.toLowerCase() === 'positive' ? 'smile' : data.label.toLowerCase() === 'negative' ? 'frown' : 'meh'}"></i>
-                        Sentiment: ${data.label}
-                    </h3>
-                    <div class="score-details">
-                        <p><span class="score-label">Positive:</span> ${(data.scores.pos * 100).toFixed(1)}%</p>
-                        <p><span class="score-label">Neutral:</span> ${(data.scores.neu * 100).toFixed(1)}%</p>
-                        <p><span class="score-label">Negative:</span> ${(data.scores.neg * 100).toFixed(1)}%</p>
-                        <p><span class="score-label">Compound:</span> ${data.scores.compound.toFixed(3)}</p>
-                    </div>
-                `;
+
+                const label = String(data.label || '').toLowerCase();
+                const scores = data.scores;
+                const validLabels = ['positive', 'negative', 'neutral'];
+
+                if (
+                    !validLabels.includes(label) ||
+                    !scores ||
+                    !Number.isFinite(scores.pos) ||
+                    !Number.isFinite(scores.neg) ||
+                    !Number.isFinite(scores.neu) ||
+                    !Number.isFinite(scores.compound)
+                ) {
+                    throw new Error('Invalid response from server');
+                }
+
+                // Validate documented score ranges.
+                const percentageKeys = ['pos', 'neg', 'neu'];
+
+                const invalidPercentage = percentageKeys.some(
+                    key => scores[key] < 0 || scores[key] > 1
+                );
+
+                if (
+                    invalidPercentage ||
+                    scores.compound < -1 ||
+                    scores.compound > 1
+                ) {
+                    throw new Error('Sentiment scores are outside valid ranges');
+                }
+
+                // Ignore a result if the input has changed.
+                if (textInput.value.trim() !== text) {
+                    result.className = 'neutral';
+                    result.textContent =
+                        'Your text changed. Please analyze it again.';
+                    return;
+                }
+
+                const icons = {
+                    positive: 'smile',
+                    negative: 'frown',
+                    neutral: 'meh'
+                };
+
+                result.className = label;
+                result.replaceChildren();
+
+                const heading = document.createElement('h3');
+                heading.style.marginBottom = '1rem';
+                heading.style.color = '#2d3748';
+
+                const icon = document.createElement('i');
+                icon.className = `fas fa-${icons[label]}`;
+                icon.setAttribute('aria-hidden', 'true');
+
+                const formattedLabel =
+                    label.charAt(0).toUpperCase() + label.slice(1);
+
+                heading.append(
+                    icon,
+                    document.createTextNode(` Sentiment: ${formattedLabel}`)
+                );
+
+                const details = document.createElement('div');
+                details.className = 'score-details';
+
+                const rows = [
+                    ['Positive', scores.pos * 100, '%'],
+                    ['Neutral', scores.neu * 100, '%'],
+                    ['Negative', scores.neg * 100, '%'],
+                    ['Compound', scores.compound, '']
+                ];
+
+                rows.forEach(([name, value, suffix]) => {
+                    const row = document.createElement('p');
+                    const labelSpan = document.createElement('span');
+                    const valueSpan = document.createElement('span');
+
+                    labelSpan.className = 'score-label';
+                    labelSpan.textContent = `${name}:`;
+
+                    const decimals = name === 'Compound' ? 3 : 1;
+                    valueSpan.textContent =
+                        `${value.toFixed(decimals)}${suffix}`;
+
+                    row.append(labelSpan, valueSpan);
+                    details.appendChild(row);
+                });
+
+                result.append(heading, details);
             } catch (error) {
-                console.error('Error:', error);
-                result.style.display = 'block';
+                console.error('Sentiment analysis failed:', error);
+
                 result.className = 'negative';
-                result.innerHTML = '<i class="fas fa-exclamation-circle"></i> An error occurred while analyzing the sentiment.';
+
+                if (timedOut) {
+                    result.textContent =
+                        'Analysis timed out. Please try again.';
+                } else if (error.name === 'AbortError') {
+                    result.textContent =
+                        'The analysis request was cancelled. Please try again.';
+                } else {
+                    result.textContent =
+                        'Unable to analyze sentiment. Please check your connection and try again.';
+                }
+            } finally {
+                clearTimeout(timeoutId);
+                button.disabled = false;
+                textInput.disabled = false;
             }
         }
     </script>
